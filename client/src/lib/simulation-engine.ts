@@ -26,16 +26,14 @@ export function useDiningPhilosophers(initialCount = 5) {
     philosophers: [] as Philosopher[],
     forks: [] as Fork[],
     timers: {} as Record<number, number>, // Time left for current action (eat/sleep)
-    simulationStartTime: 0,
-    lastTick: 0,
+    currentTime: 0,
   });
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
   // Standard output format: timestamp_in_ms X action
   const addLog = useCallback((philosopherId: number, action: string, details: string) => {
-    const timestamp = Date.now();
-    const simTime = stateRef.current.simulationStartTime > 0 ? timestamp - stateRef.current.simulationStartTime : 0;
+    const timestamp = stateRef.current.currentTime;
     
     // UI Log
     setLogs(prev => [{
@@ -48,14 +46,7 @@ export function useDiningPhilosophers(initialCount = 5) {
 
     // Terminal Log (resembling standard C output)
     const actionMap: Record<string, string> = {
-      'BECAME HUNGRY': 'is thinking', // They think until they are hungry? No, wait. 
-      // Standard 42 outputs:
-      // timestamp X has taken a fork
-      // timestamp X is eating
-      // timestamp X is sleeping
-      // timestamp X is thinking
-      // timestamp X died
-      
+      'BECAME HUNGRY': 'is thinking', 
       'TOOK FORK': 'has taken a fork',
       'STARTED EATING': 'is eating',
       'STARTED SLEEPING': 'is sleeping',
@@ -64,14 +55,13 @@ export function useDiningPhilosophers(initialCount = 5) {
     };
 
     const termAction = actionMap[action] || action;
-    setTerminalLogs(prev => [`${simTime} ${philosopherId + 1} ${termAction}`, ...prev].slice(0, 50));
+    setTerminalLogs(prev => [`${timestamp} ${philosopherId + 1} ${termAction}`, ...prev].slice(0, 50));
   }, []);
 
   // Initialize
   const initSimulation = useCallback(() => {
     const phils: Philosopher[] = [];
     const fks: Fork[] = [];
-    const now = Date.now();
     
     for (let i = 0; i < config.philosopherCount; i++) {
       phils.push({
@@ -82,7 +72,7 @@ export function useDiningPhilosophers(initialCount = 5) {
         rightForkId: (i + 1) % config.philosopherCount,
         eatingTime: 0,
         thinkingTime: 0,
-        lastMealTime: now, // Initialize last meal to now
+        lastMealTime: 0, // Initialize last meal to 0
       });
       fks.push({
         id: i,
@@ -101,8 +91,7 @@ export function useDiningPhilosophers(initialCount = 5) {
       philosophers: phils,
       forks: fks,
       timers: Object.fromEntries(phils.map(p => [p.id, 0])),
-      simulationStartTime: now,
-      lastTick: now
+      currentTime: 0
     };
   }, [config.philosopherCount]); // Re-init when count changes
 
@@ -115,16 +104,13 @@ export function useDiningPhilosophers(initialCount = 5) {
   const tick = useCallback(() => {
     if (isDead) return false;
 
-    const now = Date.now();
-    const { philosophers: currentPhilosophers, forks: currentForks, timers, simulationStartTime } = stateRef.current;
+    // Advance time
+    // We use a base step of 50ms per tick for better resolution
+    const timeStep = 50 * speed;
+    stateRef.current.currentTime += timeStep;
+    const now = stateRef.current.currentTime;
     
-    // Calculate delta time for speed adjustment
-    // In real-time simulation we just use wall clock, but if we have speed factor:
-    // We simulate logical time advancement.
-    // For simplicity with speed slider, we'll just run the tick loop faster/slower or use larger steps.
-    // Here we use fixed steps of ~50ms * speed factor logic? 
-    // Actually, simpler: The loop runs every X ms. 
-    // Let's stick to wall-clock time for the "logic" checks to match the standard problem constraints (time_to_die is in ms).
+    const { philosophers: currentPhilosophers, forks: currentForks, timers } = stateRef.current;
     
     const nextPhilosophers = [...currentPhilosophers];
     const nextForks = [...currentForks];
@@ -137,14 +123,9 @@ export function useDiningPhilosophers(initialCount = 5) {
       // Time since last meal start
       const timeSinceMeal = now - p.lastMealTime;
       
-      // If eating, they are safe (in this simplified logic, or strict check?)
-      // Strict: if timeSinceMeal > time_to_die, they die.
-      // Even if eating? Usually the check is: if (now - last_meal_start) > time_to_die => die.
-      // But if they just started eating, last_meal_start is updated.
-      
       if (p.state !== 'eating' && timeSinceMeal > config.timeToDie) {
         p.state = 'dead';
-        addLog(p.id, 'DIED', `Starved after ${timeSinceMeal}ms`);
+        addLog(p.id, 'DIED', `Starved after ${timeSinceMeal.toFixed(0)}ms`);
         setIsDead(true);
         setIsRunning(false);
         setPhilosophers(nextPhilosophers); // Show death
@@ -162,32 +143,16 @@ export function useDiningPhilosophers(initialCount = 5) {
       const actionTimer = timers[p.id] || 0;
       
       if (actionTimer > 0) {
-        // Still busy doing something
-        // Reduce timer by elapsed real time (approx 100ms per tick)
-        // Or if we use exact time:
-        // We just check end times?
-        // Let's decrement.
-        timers[p.id] = Math.max(0, actionTimer - 100 * speed); 
-        // Note: speed speeds up the "processing", so they finish eating faster.
-        // But time_to_die is wall clock? 
-        // If we speed up simulation, everything should speed up including death clock.
-        // For simplicity: We assume speed = 1 is real time. speed = 2 means 100ms tick counts as 200ms.
+        timers[p.id] = Math.max(0, actionTimer - timeStep); 
         
         // Update visual timers
-        if (p.state === 'eating') p.eatingTime += 100 * speed;
-        if (p.state === 'thinking') p.thinkingTime += 100 * speed; // "sleeping" maps to thinking state in our previous model, let's align.
+        if (p.state === 'eating') p.eatingTime += timeStep;
+        if (p.state === 'thinking') p.thinkingTime += timeStep; 
       } else {
         // Action finished, decide next state
         
         if (p.state === 'thinking') {
-          // Finished thinking (sleeping), became hungry
-          // In standard: Eat -> Sleep -> Think -> Eat
-          // Our visual model: Thinking (Sleep/Think) -> Hungry -> Eating
-          
           p.state = 'hungry';
-          // addLog(p.id, 'BECAME HUNGRY', 'Waiting for forks');
-          // Standard output doesn't log "hungry", it logs "thinking" when they start sleeping/thinking.
-          // We'll log internal event for UI.
           hasChanges = true;
           relevantActionCode = 'THINKING';
           
@@ -198,7 +163,7 @@ export function useDiningPhilosophers(initialCount = 5) {
             rightFork.ownerId = p.id;
             
             p.state = 'eating';
-            p.lastMealTime = Date.now(); // Reset death timer!
+            p.lastMealTime = now; // Reset death timer to current internal time
             
             // Set timer
             timers[p.id] = config.timeToEat;
@@ -214,17 +179,11 @@ export function useDiningPhilosophers(initialCount = 5) {
           leftFork.ownerId = null;
           rightFork.ownerId = null;
           
-          p.state = 'thinking'; // This represents "Sleeping" in standard problem
+          p.state = 'thinking'; // This represents "Sleeping"
           
           timers[p.id] = config.timeToSleep;
           
           addLog(p.id, 'STARTED SLEEPING', `Will sleep for ${config.timeToSleep}ms`);
-          
-          // In 42 task: Eat -> Sleep -> Think
-          // We can add a distinct Sleep state if we want, but visually 3 states is cleaner.
-          // Let's say "Thinking" state = Sleeping + Thinking.
-          // When sleep finishes, they "think" (usually instant or short) then get hungry.
-          // For this visualization, let's keep it simple: Thinking = Sleeping.
           
           hasChanges = true;
           relevantActionCode = 'EATING';
@@ -247,7 +206,7 @@ export function useDiningPhilosophers(initialCount = 5) {
   // Auto-run effect
   useEffect(() => {
     if (!isRunning || isStepMode || isDead) return;
-    const interval = setInterval(tick, 100); // 100ms resolution
+    const interval = setInterval(tick, 50); // Run loop every 50ms real time
     return () => clearInterval(interval);
   }, [isRunning, isStepMode, isDead, tick]);
 
