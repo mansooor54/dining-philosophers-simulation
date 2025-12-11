@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Play, Pause, RotateCcw, Brain, StepForward, Settings2, Skull } from "lucide-react";
+import { Play, Pause, RotateCcw, Brain, StepForward, Settings2, Skull, User } from "lucide-react";
+import authorPhoto from "@assets/author_photo.png";
 import {
   Popover,
   PopoverContent,
@@ -298,6 +299,21 @@ export default function Home() {
           </Tabs>
         </div>
       </main>
+
+      {/* Author Footer */}
+      <footer className="mt-8 border-t pt-6 pb-4">
+        <div className="flex items-center justify-center gap-4">
+          <img 
+            src={authorPhoto} 
+            alt="Mansoor Abdullah Almarzooqi" 
+            className="w-14 h-14 rounded-full object-cover border-2 border-primary shadow-lg"
+          />
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Created by</div>
+            <div className="font-serif font-bold text-lg text-foreground">Mansoor Abdullah Almarzooqi</div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
