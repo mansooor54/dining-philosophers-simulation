@@ -198,8 +198,15 @@ export default function Home() {
         {/* Left Column: Simulation & Diagram */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           
-          {/* Simulation Stage */}
-          <div className={`bg-card rounded-2xl border shadow-sm p-8 relative overflow-hidden min-h-[500px] transition-colors duration-500 ${isDead ? 'border-destructive/50 bg-destructive/5' : ''}`}>
+          {/* Simulation Stage with Stats */}
+          <div className="flex gap-4">
+            {/* Stats Summary - Left Side */}
+            <div className="shrink-0">
+              <StatsSummary philosophers={philosophers} />
+            </div>
+            
+            {/* Table */}
+            <div className={`flex-1 bg-card rounded-2xl border shadow-sm p-8 relative overflow-hidden min-h-[500px] transition-colors duration-500 ${isDead ? 'border-destructive/50 bg-destructive/5' : ''}`}>
             
             {isDead && (
               <div className="absolute inset-0 flex items-center justify-center z-50 bg-background/50 backdrop-blur-sm animate-in fade-in duration-1000">
@@ -235,10 +242,8 @@ export default function Home() {
             </div>
             
             <Table philosophers={philosophers} forks={forks} />
+            </div>
           </div>
-
-          {/* State Summary Cards */}
-          <StatsSummary philosophers={philosophers} />
 
           {/* Process Diagram */}
           <ProcessDiagram 
