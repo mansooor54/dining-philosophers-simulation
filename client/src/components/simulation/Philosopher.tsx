@@ -55,6 +55,11 @@ export function PhilosopherAvatar({ philosopher, position }: PhilosopherProps) {
           />
         </div>
         
+        {/* Eat Count Badge */}
+        <div className="absolute -top-1 -right-1 z-30 bg-state-eating text-white w-5 h-5 rounded-full flex items-center justify-center shadow-lg border border-white">
+          <span className="text-[10px] font-bold">{philosopher.eatCount}</span>
+        </div>
+        
         {/* Status Badge */}
         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-30 bg-background border border-border px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1 min-w-[66px] justify-center">
           {stateIcon[state] || stateIcon.thinking}

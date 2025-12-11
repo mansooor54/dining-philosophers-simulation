@@ -72,7 +72,8 @@ export function useDiningPhilosophers(initialCount = 5) {
         rightForkId: (i + 1) % config.philosopherCount,
         eatingTime: 0,
         thinkingTime: 0,
-        lastMealTime: 0, // Initialize last meal to 0
+        lastMealTime: 0,
+        eatCount: 0,
       });
       fks.push({
         id: i,
@@ -166,13 +167,14 @@ export function useDiningPhilosophers(initialCount = 5) {
             
             p.state = 'eating';
             p.lastMealTime = now; // Reset death timer to current internal time
+            p.eatCount += 1; // Increment eat count
             
             // Set timer for eating duration
             timers[p.id] = config.timeToEat;
             
             addLog(p.id, 'TOOK FORK', `Fork ${p.leftForkId}`);
             addLog(p.id, 'TOOK FORK', `Fork ${p.rightForkId}`);
-            addLog(p.id, 'STARTED EATING', `Will eat for ${config.timeToEat}ms`);
+            addLog(p.id, 'STARTED EATING', `Meal #${p.eatCount}`);
             hasChanges = true;
             relevantActionCode = 'HUNGRY';
           }

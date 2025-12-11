@@ -9,6 +9,7 @@ export interface Philosopher {
   eatingTime: number; 
   thinkingTime: number; 
   lastMealTime: number; // Timestamp of last meal start
+  eatCount: number; // Number of times eaten
 }
 
 export interface Fork {
