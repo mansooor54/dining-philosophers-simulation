@@ -216,7 +216,7 @@ export default function Home() {
             <div className="absolute top-4 left-4 z-10 space-y-2 pointer-events-none">
                <div className="flex items-center gap-2 text-xs font-mono bg-background/80 backdrop-blur p-2 rounded border shadow-sm">
                  <div className="w-3 h-3 rounded-full bg-state-thinking"></div>
-                 <span>Thinking (Sleeping)</span>
+                 <span>Thinking</span>
                </div>
                <div className="flex items-center gap-2 text-xs font-mono bg-background/80 backdrop-blur p-2 rounded border shadow-sm">
                  <div className="w-3 h-3 rounded-full bg-state-hungry animate-pulse"></div>
@@ -225,6 +225,10 @@ export default function Home() {
                <div className="flex items-center gap-2 text-xs font-mono bg-background/80 backdrop-blur p-2 rounded border shadow-sm">
                  <div className="w-3 h-3 rounded-full bg-state-eating"></div>
                  <span>Eating</span>
+               </div>
+               <div className="flex items-center gap-2 text-xs font-mono bg-background/80 backdrop-blur p-2 rounded border shadow-sm">
+                 <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                 <span>Sleeping</span>
                </div>
             </div>
             

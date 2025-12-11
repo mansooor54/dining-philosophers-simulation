@@ -1,4 +1,4 @@
-export type PhilosopherState = 'thinking' | 'hungry' | 'eating' | 'dead';
+export type PhilosopherState = 'thinking' | 'hungry' | 'eating' | 'sleeping' | 'dead';
 
 export interface Philosopher {
   id: number;

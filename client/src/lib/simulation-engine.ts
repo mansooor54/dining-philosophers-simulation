@@ -4,7 +4,7 @@ import { CodeSnippetKey } from './code-snippets';
 
 const DEFAULT_CONFIG: SimulationConfig = {
   philosopherCount: 5,
-  timeToDie: 410, // ms
+  timeToDie: 800, // ms
   timeToEat: 200, // ms
   timeToSleep: 200, // ms
 };
@@ -46,7 +46,6 @@ export function useDiningPhilosophers(initialCount = 5) {
 
     // Terminal Log (resembling standard C output)
     const actionMap: Record<string, string> = {
-      'BECAME HUNGRY': 'is thinking', 
       'TOOK FORK': 'has taken a fork',
       'STARTED EATING': 'is eating',
       'STARTED SLEEPING': 'is sleeping',
@@ -105,7 +104,6 @@ export function useDiningPhilosophers(initialCount = 5) {
     if (isDead) return false;
 
     // Advance time
-    // We use a base step of 50ms per tick for better resolution
     const timeStep = 50 * speed;
     stateRef.current.currentTime += timeStep;
     const now = stateRef.current.currentTime;
@@ -123,7 +121,7 @@ export function useDiningPhilosophers(initialCount = 5) {
       // Time since last meal start
       const timeSinceMeal = now - p.lastMealTime;
       
-      if (p.state !== 'eating' && timeSinceMeal > config.timeToDie) {
+      if (p.state !== 'eating' && p.state !== 'dead' && timeSinceMeal > config.timeToDie) {
         p.state = 'dead';
         addLog(p.id, 'DIED', `Starved after ${timeSinceMeal.toFixed(0)}ms`);
         setIsDead(true);
@@ -134,6 +132,7 @@ export function useDiningPhilosophers(initialCount = 5) {
     }
 
     // Process actions
+    // Flow: thinking -> hungry -> eating -> sleeping -> thinking -> ...
     for (let i = 0; i < nextPhilosophers.length; i++) {
       const p = { ...nextPhilosophers[i] };
       const leftFork = nextForks[p.leftForkId];
@@ -152,12 +151,13 @@ export function useDiningPhilosophers(initialCount = 5) {
         // Action finished, decide next state
         
         if (p.state === 'thinking') {
+          // Finished thinking, become hungry
           p.state = 'hungry';
           hasChanges = true;
           relevantActionCode = 'THINKING';
           
         } else if (p.state === 'hungry') {
-          // Try to eat
+          // Try to eat - need both forks
           if (leftFork.ownerId === null && rightFork.ownerId === null) {
             leftFork.ownerId = p.id;
             rightFork.ownerId = p.id;
@@ -165,7 +165,7 @@ export function useDiningPhilosophers(initialCount = 5) {
             p.state = 'eating';
             p.lastMealTime = now; // Reset death timer to current internal time
             
-            // Set timer
+            // Set timer for eating duration
             timers[p.id] = config.timeToEat;
             
             addLog(p.id, 'TOOK FORK', `Fork ${p.leftForkId}`);
@@ -175,18 +175,30 @@ export function useDiningPhilosophers(initialCount = 5) {
             relevantActionCode = 'HUNGRY';
           }
         } else if (p.state === 'eating') {
-          // Finished eating
+          // Finished eating, release forks and go to sleep
           leftFork.ownerId = null;
           rightFork.ownerId = null;
           
-          p.state = 'thinking'; // This represents "Sleeping"
+          p.state = 'sleeping';
           
+          // Set timer for sleeping duration
           timers[p.id] = config.timeToSleep;
           
           addLog(p.id, 'STARTED SLEEPING', `Will sleep for ${config.timeToSleep}ms`);
           
           hasChanges = true;
           relevantActionCode = 'EATING';
+        } else if (p.state === 'sleeping') {
+          // Finished sleeping, start thinking
+          p.state = 'thinking';
+          
+          // Set a short thinking time before getting hungry again
+          timers[p.id] = 100; // Brief thinking period
+          
+          addLog(p.id, 'STARTED THINKING', 'Woke up and started thinking');
+          
+          hasChanges = true;
+          relevantActionCode = 'THINKING';
         }
       }
       nextPhilosophers[i] = p;
@@ -222,9 +234,6 @@ export function useDiningPhilosophers(initialCount = 5) {
 
   const updateConfig = (newConfig: Partial<SimulationConfig>) => {
     setConfig(prev => ({ ...prev, ...newConfig }));
-    // If count changed, we need re-init, which is handled by useEffect dependency on philosopherCount
-    // But other params can change live?
-    // Changing time_to_die live is fun.
   };
 
   return {
