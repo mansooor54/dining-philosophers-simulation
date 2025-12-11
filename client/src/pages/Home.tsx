@@ -3,13 +3,14 @@ import { Table } from "@/components/simulation/Table";
 import { LogViewer } from "@/components/simulation/LogViewer";
 import { ProcessDiagram } from "@/components/simulation/ProcessDiagram";
 import { CodeViewer } from "@/components/simulation/CodeViewer";
+import { TerminalView } from "@/components/simulation/TerminalView";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Play, Pause, RotateCcw, Brain, StepForward, Settings2 } from "lucide-react";
+import { Play, Pause, RotateCcw, Brain, StepForward, Settings2, Skull } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -20,22 +21,24 @@ export default function Home() {
   const { 
     philosophers, 
     forks, 
-    logs, 
+    logs,
+    terminalLogs,
     isRunning, 
     setIsRunning,
     resetSimulation,
     speed,
     setSpeed,
-    philosopherCount,
-    setPhilosopherCount,
+    config,
+    updateConfig,
     activeCode,
     isStepMode,
     setIsStepMode,
-    step
+    step,
+    isDead
   } = useDiningPhilosophers();
 
   const handleStep = () => {
-    setIsRunning(true); // Ensure it's "running" but controlled by manual steps if logic requires
+    setIsRunning(true); 
     step();
   };
 
@@ -60,13 +63,13 @@ export default function Home() {
                    Config
                  </Button>
                </PopoverTrigger>
-               <PopoverContent className="w-80">
+               <PopoverContent className="w-96">
                  <div className="grid gap-4">
                    <div className="space-y-2">
-                     <h4 className="font-medium leading-none">Simulation Settings</h4>
-                     <p className="text-sm text-muted-foreground">Adjust the parameters of the table.</p>
+                     <h4 className="font-medium leading-none">Simulation Parameters</h4>
+                     <p className="text-sm text-muted-foreground">Configure the rules of the table.</p>
                    </div>
-                   <div className="grid gap-2">
+                   <div className="grid gap-4 py-2">
                      <div className="grid grid-cols-3 items-center gap-4">
                        <Label htmlFor="count">Philosophers</Label>
                        <Input
@@ -74,13 +77,49 @@ export default function Home() {
                          type="number"
                          min={2}
                          max={15}
-                         value={philosopherCount}
-                         onChange={(e) => {
-                           const val = parseInt(e.target.value);
-                           if (val >= 2 && val <= 15) setPhilosopherCount(val);
-                         }}
+                         value={config.philosopherCount}
+                         onChange={(e) => updateConfig({ philosopherCount: parseInt(e.target.value) })}
                          className="col-span-2 h-8"
                        />
+                     </div>
+                     <div className="grid grid-cols-3 items-center gap-4">
+                       <Label htmlFor="die" className="text-destructive font-bold">Time to Die</Label>
+                       <div className="col-span-2 flex items-center gap-2">
+                         <Input
+                           id="die"
+                           type="number"
+                           value={config.timeToDie}
+                           onChange={(e) => updateConfig({ timeToDie: parseInt(e.target.value) })}
+                           className="h-8"
+                         />
+                         <span className="text-xs text-muted-foreground">ms</span>
+                       </div>
+                     </div>
+                     <div className="grid grid-cols-3 items-center gap-4">
+                       <Label htmlFor="eat">Time to Eat</Label>
+                       <div className="col-span-2 flex items-center gap-2">
+                         <Input
+                           id="eat"
+                           type="number"
+                           value={config.timeToEat}
+                           onChange={(e) => updateConfig({ timeToEat: parseInt(e.target.value) })}
+                           className="h-8"
+                         />
+                         <span className="text-xs text-muted-foreground">ms</span>
+                       </div>
+                     </div>
+                     <div className="grid grid-cols-3 items-center gap-4">
+                       <Label htmlFor="sleep">Time to Sleep</Label>
+                       <div className="col-span-2 flex items-center gap-2">
+                         <Input
+                           id="sleep"
+                           type="number"
+                           value={config.timeToSleep}
+                           onChange={(e) => updateConfig({ timeToSleep: parseInt(e.target.value) })}
+                           className="h-8"
+                         />
+                         <span className="text-xs text-muted-foreground">ms</span>
+                       </div>
                      </div>
                    </div>
                  </div>
@@ -96,21 +135,22 @@ export default function Home() {
                  id="step-mode" 
                  checked={isStepMode} 
                  onCheckedChange={setIsStepMode} 
+                 disabled={isDead}
                />
              </div>
 
              <div className="h-6 w-px bg-border mx-1"></div>
 
-             {/* Speed Slider (Only if NOT step mode) */}
+             {/* Speed Slider */}
              {!isStepMode && (
                <div className="flex items-center gap-2 px-2">
                  <span className="text-xs font-bold uppercase text-muted-foreground">Speed</span>
                  <Slider 
                    value={[speed]} 
                    onValueChange={(vals) => setSpeed(vals[0])} 
-                   min={0.5} 
-                   max={5} 
-                   step={0.5} 
+                   min={0.1} 
+                   max={2} 
+                   step={0.1} 
                    className="w-[100px]"
                  />
                </div>
@@ -124,6 +164,7 @@ export default function Home() {
                  variant="default" 
                  size="sm" 
                  onClick={handleStep}
+                 disabled={isDead}
                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                >
                  <StepForward className="w-4 h-4" />
@@ -134,6 +175,7 @@ export default function Home() {
                  variant={isRunning ? "destructive" : "default"} 
                  size="sm" 
                  onClick={() => setIsRunning(!isRunning)}
+                 disabled={isDead}
                  className="gap-2"
                >
                  {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -155,11 +197,26 @@ export default function Home() {
         <div className="lg:col-span-2 flex flex-col gap-6">
           
           {/* Simulation Stage */}
-          <div className="bg-card rounded-2xl border shadow-sm p-8 relative overflow-hidden min-h-[500px]">
+          <div className={`bg-card rounded-2xl border shadow-sm p-8 relative overflow-hidden min-h-[500px] transition-colors duration-500 ${isDead ? 'border-destructive/50 bg-destructive/5' : ''}`}>
+            
+            {isDead && (
+              <div className="absolute inset-0 flex items-center justify-center z-50 bg-background/50 backdrop-blur-sm animate-in fade-in duration-1000">
+                <div className="bg-destructive text-destructive-foreground p-6 rounded-xl shadow-2xl text-center border-4 border-destructive-foreground/20">
+                  <Skull className="w-16 h-16 mx-auto mb-4 animate-bounce" />
+                  <h2 className="text-3xl font-bold font-serif mb-2">SIMULATION ENDED</h2>
+                  <p className="opacity-90">A philosopher has died of starvation.</p>
+                  <Button variant="secondary" className="mt-6 w-full font-bold" onClick={resetSimulation}>
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Restart
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="absolute top-4 left-4 z-10 space-y-2 pointer-events-none">
                <div className="flex items-center gap-2 text-xs font-mono bg-background/80 backdrop-blur p-2 rounded border shadow-sm">
                  <div className="w-3 h-3 rounded-full bg-state-thinking"></div>
-                 <span>Thinking</span>
+                 <span>Thinking (Sleeping)</span>
                </div>
                <div className="flex items-center gap-2 text-xs font-mono bg-background/80 backdrop-blur p-2 rounded border shadow-sm">
                  <div className="w-3 h-3 rounded-full bg-state-hungry animate-pulse"></div>
@@ -184,20 +241,36 @@ export default function Home() {
              <div className="absolute top-0 right-0 p-8 opacity-10">
                <Brain className="w-32 h-32" />
              </div>
-             <h3 className="font-serif font-bold text-xl mb-2">The Problem</h3>
-             <p className="text-sm opacity-90 leading-relaxed">
-               Five philosophers sit at a table. They spend their lives thinking and eating. 
-               To eat, a philosopher needs <strong>two forks</strong> (left and right). 
-               They cannot eat if a neighbor is eating. This simulation visualizes resource sharing 
-               and potential for deadlock/starvation.
-             </p>
+             <h3 className="font-serif font-bold text-xl mb-2">Configuration</h3>
+             <div className="grid grid-cols-2 gap-4 text-sm opacity-90 font-mono">
+                <div>
+                   <div className="text-xs opacity-50 uppercase">Time to Die</div>
+                   <div className="text-lg font-bold text-red-300">{config.timeToDie}ms</div>
+                </div>
+                <div>
+                   <div className="text-xs opacity-50 uppercase">Philosophers</div>
+                   <div className="text-lg font-bold">{config.philosopherCount}</div>
+                </div>
+                <div>
+                   <div className="text-xs opacity-50 uppercase">Time to Eat</div>
+                   <div className="text-lg font-bold">{config.timeToEat}ms</div>
+                </div>
+                <div>
+                   <div className="text-xs opacity-50 uppercase">Time to Sleep</div>
+                   <div className="text-lg font-bold">{config.timeToSleep}ms</div>
+                </div>
+             </div>
           </div>
           
-          <Tabs defaultValue="logs" className="flex-1 flex flex-col">
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="logs">Process Log</TabsTrigger>
-              <TabsTrigger value="code">Code Viewer</TabsTrigger>
+          <Tabs defaultValue="terminal" className="flex-1 flex flex-col">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="terminal">Terminal</TabsTrigger>
+              <TabsTrigger value="logs">UI Log</TabsTrigger>
+              <TabsTrigger value="code">Code</TabsTrigger>
             </TabsList>
+            <TabsContent value="terminal" className="flex-1 h-0 min-h-[300px]">
+              <TerminalView logs={terminalLogs} />
+            </TabsContent>
             <TabsContent value="logs" className="flex-1 h-0 min-h-[300px]">
               <LogViewer logs={logs} />
             </TabsContent>

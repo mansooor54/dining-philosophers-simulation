@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, Utensils, Brain, AlertCircle } from "lucide-react";
+import { ArrowRight, Clock, Utensils, Brain, AlertCircle, Skull } from "lucide-react";
 
 export function ProcessDiagram() {
   return (
@@ -15,8 +15,8 @@ export function ProcessDiagram() {
             <Brain className="w-8 h-8 text-state-thinking" />
           </div>
           <span className="font-bold text-sm text-muted-foreground">THINKING</span>
-          <div className="absolute -bottom-8 text-[10px] text-muted-foreground bg-secondary px-2 py-1 rounded">
-            Releases Forks
+          <div className="text-[10px] text-muted-foreground text-center max-w-[120px]">
+            Releases forks, waits for think_time
           </div>
         </div>
 
@@ -28,8 +28,8 @@ export function ProcessDiagram() {
             <Clock className="w-8 h-8 text-state-hungry" />
           </div>
           <span className="font-bold text-sm text-muted-foreground">HUNGRY</span>
-          <div className="absolute -top-8 text-[10px] text-muted-foreground bg-secondary px-2 py-1 rounded w-32 text-center">
-            Waits for Left & Right Forks
+          <div className="text-[10px] text-muted-foreground text-center max-w-[120px]">
+            Waits to acquire BOTH forks
           </div>
         </div>
 
@@ -41,8 +41,8 @@ export function ProcessDiagram() {
             <Utensils className="w-8 h-8 text-state-eating" />
           </div>
           <span className="font-bold text-sm text-muted-foreground">EATING</span>
-          <div className="absolute -bottom-8 text-[10px] text-muted-foreground bg-secondary px-2 py-1 rounded">
-             Holds Forks
+          <div className="text-[10px] text-muted-foreground text-center max-w-[120px]">
+            Holds forks, resets starvation timer
           </div>
         </div>
         
@@ -62,13 +62,20 @@ export function ProcessDiagram() {
         </div>
 
       </div>
+      
+      {/* Death State Visualization */}
+      <div className="border-t pt-4 mt-2 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+            <Skull className="w-4 h-4 text-destructive" />
+            <span><strong>Starvation:</strong> If time since last meal &gt; time_to_die → <span className="text-destructive font-bold">DEATH</span></span>
+        </div>
+      </div>
 
-      <div className="mt-4 bg-muted/30 p-4 rounded-lg text-xs text-muted-foreground flex gap-3 items-start border">
+      <div className="mt-2 bg-muted/30 p-3 rounded-lg text-xs text-muted-foreground flex gap-3 items-start border">
         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-primary" />
         <p>
           <strong>Deadlock Prevention:</strong> In this simulation, philosophers only pick up forks if 
-          <strong> both</strong> are available simultaneously. This atomic acquisition strategy prevents 
-          the classic deadlock scenario where everyone holds one fork and waits forever for the second.
+          <strong> both</strong> are available simultaneously (Atomic Acquisition).
         </p>
       </div>
     </div>

@@ -1,19 +1,20 @@
-export type PhilosopherState = 'thinking' | 'hungry' | 'eating';
+export type PhilosopherState = 'thinking' | 'hungry' | 'eating' | 'dead';
 
 export interface Philosopher {
   id: number;
   state: PhilosopherState;
-  stateDuration: number; // How long they've been in this state (for visuals)
+  stateDuration: number; 
   leftForkId: number;
   rightForkId: number;
-  eatingTime: number; // Total time spent eating
-  thinkingTime: number; // Total time spent thinking
+  eatingTime: number; 
+  thinkingTime: number; 
+  lastMealTime: number; // Timestamp of last meal start
 }
 
 export interface Fork {
   id: number;
-  ownerId: number | null; // null means on the table
-  isDirty: boolean; // Optional: for Chandy-Misra optimization visualization if we want
+  ownerId: number | null; 
+  isDirty: boolean; 
 }
 
 export interface SimulationLog {
@@ -26,7 +27,7 @@ export interface SimulationLog {
 
 export interface SimulationConfig {
   philosopherCount: number;
-  baseTimeUnit: number; // ms per tick
-  eatDurationRange: [number, number];
-  thinkDurationRange: [number, number];
+  timeToDie: number;
+  timeToEat: number;
+  timeToSleep: number;
 }

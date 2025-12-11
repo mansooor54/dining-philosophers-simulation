@@ -13,15 +13,12 @@ export function ForkIcon({ fork, position, ownerPosition, rotation }: ForkProps)
   const isOwned = fork.ownerId !== null;
   
   // If owned, we want to move it towards the owner slightly
-  // In a real circular layout, we'd calculate the exact offset.
-  // For simplicity, if ownerPosition is provided, use it, otherwise stay at table position.
-  
   const finalX = isOwned && ownerPosition ? ownerPosition.x + (Math.random() * 20 - 10) : position.x;
   const finalY = isOwned && ownerPosition ? ownerPosition.y + (Math.random() * 20 - 10) : position.y;
 
   return (
     <motion.div
-      className="absolute z-0"
+      className={`absolute ${isOwned ? 'z-20' : 'z-0'}`} 
       initial={false}
       animate={{
         left: finalX,
