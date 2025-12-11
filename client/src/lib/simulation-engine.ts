@@ -20,6 +20,7 @@ export function useDiningPhilosophers(initialCount = 5) {
   const [speed, setSpeed] = useState(1);
   const [activeCode, setActiveCode] = useState<CodeSnippetKey>('MAIN');
   const [isStepMode, setIsStepMode] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   
   // Refs for mutable state
   const stateRef = useRef({
@@ -107,6 +108,7 @@ export function useDiningPhilosophers(initialCount = 5) {
     const timeStep = 50 * speed;
     stateRef.current.currentTime += timeStep;
     const now = stateRef.current.currentTime;
+    setCurrentTime(now);
     
     const { philosophers: currentPhilosophers, forks: currentForks, timers } = stateRef.current;
     
@@ -253,6 +255,7 @@ export function useDiningPhilosophers(initialCount = 5) {
     isStepMode,
     setIsStepMode,
     step,
-    isDead
+    isDead,
+    currentTime
   };
 }

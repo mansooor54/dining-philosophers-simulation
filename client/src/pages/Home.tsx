@@ -34,7 +34,8 @@ export default function Home() {
     isStepMode,
     setIsStepMode,
     step,
-    isDead
+    isDead,
+    currentTime
   } = useDiningPhilosophers();
 
   const handleStep = () => {
@@ -236,7 +237,11 @@ export default function Home() {
           </div>
 
           {/* Process Diagram */}
-          <ProcessDiagram />
+          <ProcessDiagram 
+            philosophers={philosophers} 
+            currentTime={currentTime} 
+            timeToDie={config.timeToDie} 
+          />
         </div>
 
         {/* Right Column: Info, Logs & Code */}
