@@ -48,7 +48,7 @@ export default function Home() {
       {/* Header */}
       <header className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
         <div>
-          <h1 className="font-serif text-3xl md:text-4xl font-bold text-foreground">Dining Philosophers</h1>
+          <h1 className="font-serif text-3xl md:text-4xl font-bold text-foreground">Dining Philosophers Simulation</h1>
           <p className="text-muted-foreground mt-1">Concurrency Problem Visualization</p>
         </div>
         

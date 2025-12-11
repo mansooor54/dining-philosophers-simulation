@@ -129,6 +129,7 @@ export function useDiningPhilosophers(initialCount = 5) {
         addLog(p.id, 'DIED', `Starved after ${timeSinceMeal.toFixed(0)}ms`);
         setIsDead(true);
         setIsRunning(false);
+        setActiveCode('DEATH');
         setPhilosophers(nextPhilosophers); // Show death
         return true;
       }
@@ -202,7 +203,7 @@ export function useDiningPhilosophers(initialCount = 5) {
           addLog(p.id, 'STARTED THINKING', 'Woke up and started thinking');
           
           hasChanges = true;
-          relevantActionCode = 'THINKING';
+          relevantActionCode = 'SLEEPING';
         }
       }
       nextPhilosophers[i] = p;
