@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Philosopher, Fork, SimulationLog, SimulationConfig } from './types';
+import { CodeSnippetKey } from './code-snippets';
 
 const DEFAULT_CONFIG: SimulationConfig = {
   philosopherCount: 5,
@@ -8,18 +9,21 @@ const DEFAULT_CONFIG: SimulationConfig = {
   thinkDurationRange: [2000, 5000],
 };
 
-export function useDiningPhilosophers(config: SimulationConfig = DEFAULT_CONFIG) {
+export function useDiningPhilosophers(initialCount = 5) {
+  const [philosopherCount, setPhilosopherCount] = useState(initialCount);
   const [philosophers, setPhilosophers] = useState<Philosopher[]>([]);
   const [forks, setForks] = useState<Fork[]>([]);
   const [logs, setLogs] = useState<SimulationLog[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [activeCode, setActiveCode] = useState<CodeSnippetKey>('MAIN');
+  const [isStepMode, setIsStepMode] = useState(false);
   
-  // Refs for mutable state during simulation steps to avoid closure staleness
+  // Refs for mutable state
   const stateRef = useRef({
     philosophers: [] as Philosopher[],
     forks: [] as Fork[],
-    timers: {} as Record<number, number>, // Time left for current action per philosopher
+    timers: {} as Record<number, number>, 
   });
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -39,13 +43,13 @@ export function useDiningPhilosophers(config: SimulationConfig = DEFAULT_CONFIG)
     const phils: Philosopher[] = [];
     const fks: Fork[] = [];
     
-    for (let i = 0; i < config.philosopherCount; i++) {
+    for (let i = 0; i < philosopherCount; i++) {
       phils.push({
         id: i,
         state: 'thinking',
         stateDuration: 0,
         leftForkId: i,
-        rightForkId: (i + 1) % config.philosopherCount,
+        rightForkId: (i + 1) % philosopherCount,
         eatingTime: 0,
         thinkingTime: 0
       });
@@ -61,9 +65,10 @@ export function useDiningPhilosophers(config: SimulationConfig = DEFAULT_CONFIG)
     stateRef.current = {
       philosophers: phils,
       forks: fks,
-      timers: Object.fromEntries(phils.map(p => [p.id, Math.random() * 2000])) // Random start stagger
+      timers: Object.fromEntries(phils.map(p => [p.id, Math.random() * 2000]))
     };
-  }, [config.philosopherCount]);
+    setLogs([]);
+  }, [philosopherCount]);
 
   const tick = useCallback(() => {
     const { philosophers: currentPhilosophers, forks: currentForks, timers } = stateRef.current;
@@ -71,6 +76,7 @@ export function useDiningPhilosophers(config: SimulationConfig = DEFAULT_CONFIG)
     const nextPhilosophers = [...currentPhilosophers];
     const nextForks = [...currentForks];
     let hasChanges = false;
+    let relevantActionCode: CodeSnippetKey = 'MAIN';
 
     // Process each philosopher
     for (let i = 0; i < nextPhilosophers.length; i++) {
@@ -89,46 +95,36 @@ export function useDiningPhilosophers(config: SimulationConfig = DEFAULT_CONFIG)
 
       // State Transitions
       if (p.state === 'thinking') {
-        // Done thinking, become hungry
         p.state = 'hungry';
         addLog(p.id, 'BECAME HUNGRY', 'Finished thinking, waiting for forks');
         hasChanges = true;
+        relevantActionCode = 'THINKING';
       } else if (p.state === 'hungry') {
-        // Try to pick up forks
-        // Simple strategy: Check if both are available (Atomic check for simulation simplicity, 
-        // though typically this is where deadlocks happen if not handled)
-        
-        // For visualization purposes, we let them pick up one if available, 
-        // OR we enforce a "wait for both" strategy to prevent instant deadlock in this simple demo.
-        // Let's implement a "check both" strategy to keep it flowing nicely.
-        
         if (leftFork.ownerId === null && rightFork.ownerId === null) {
-          // Pick up both
           leftFork.ownerId = p.id;
           rightFork.ownerId = p.id;
           p.state = 'eating';
           
-          // Set timer for eating
-          const duration = Math.random() * (config.eatDurationRange[1] - config.eatDurationRange[0]) + config.eatDurationRange[0];
+          const duration = Math.random() * (DEFAULT_CONFIG.eatDurationRange[1] - DEFAULT_CONFIG.eatDurationRange[0]) + DEFAULT_CONFIG.eatDurationRange[0];
           timers[p.id] = duration;
           
           addLog(p.id, 'STARTED EATING', `Acquired forks ${p.leftForkId} & ${p.rightForkId}`);
           hasChanges = true;
+          relevantActionCode = 'HUNGRY';
         } else {
-          // Still waiting - maybe log occasionally or just visual indicator
+           // Waiting logic
         }
       } else if (p.state === 'eating') {
-        // Done eating, put down forks
         leftFork.ownerId = null;
         rightFork.ownerId = null;
         p.state = 'thinking';
         
-        // Set timer for thinking
-        const duration = Math.random() * (config.thinkDurationRange[1] - config.thinkDurationRange[0]) + config.thinkDurationRange[0];
+        const duration = Math.random() * (DEFAULT_CONFIG.thinkDurationRange[1] - DEFAULT_CONFIG.thinkDurationRange[0]) + DEFAULT_CONFIG.thinkDurationRange[0];
         timers[p.id] = duration;
         
         addLog(p.id, 'FINISHED EATING', `Released forks ${p.leftForkId} & ${p.rightForkId}`);
         hasChanges = true;
+        relevantActionCode = 'EATING';
       }
       
       nextPhilosophers[i] = p;
@@ -139,23 +135,60 @@ export function useDiningPhilosophers(config: SimulationConfig = DEFAULT_CONFIG)
       setForks(nextForks);
       stateRef.current.philosophers = nextPhilosophers;
       stateRef.current.forks = nextForks;
+      setActiveCode(relevantActionCode);
+      return true; // Return true if meaningful change happened
     }
-  }, [speed, config.eatDurationRange, config.thinkDurationRange, addLog]);
+    return false;
+  }, [speed, addLog]);
 
+  // Auto-run effect
   useEffect(() => {
-    if (!isRunning) return;
+    if (!isRunning || isStepMode) return;
     const interval = setInterval(tick, 100);
     return () => clearInterval(interval);
-  }, [isRunning, tick]);
+  }, [isRunning, isStepMode, tick]);
 
-  const toggleSimulation = () => setIsRunning(!isRunning);
+  const step = () => {
+    // Run tick repeatedly until a change happens or safety limit reached
+    // This ensures "Step" moves to the next interesting event, not just 100ms
+    let safety = 0;
+    let changed = false;
+    while (!changed && safety < 100) {
+       changed = tick();
+       safety++;
+    }
+  };
+
   const resetSimulation = () => {
     setIsRunning(false);
     setLogs([]);
-    // Re-init logic will trigger via existing useEffect dependency if we force update, 
-    // but easier to just reload page or reset state manually.
-    // For now, simplified reset:
-    window.location.reload(); 
+    setActiveCode('MAIN');
+    // Re-trigger init
+    const phils: Philosopher[] = [];
+    const fks: Fork[] = [];
+    for (let i = 0; i < philosopherCount; i++) {
+      phils.push({
+        id: i,
+        state: 'thinking',
+        stateDuration: 0,
+        leftForkId: i,
+        rightForkId: (i + 1) % philosopherCount,
+        eatingTime: 0,
+        thinkingTime: 0
+      });
+      fks.push({
+        id: i,
+        ownerId: null,
+        isDirty: true
+      });
+    }
+    setPhilosophers(phils);
+    setForks(fks);
+    stateRef.current = {
+      philosophers: phils,
+      forks: fks,
+      timers: Object.fromEntries(phils.map(p => [p.id, Math.random() * 2000]))
+    };
   };
 
   return {
@@ -163,9 +196,16 @@ export function useDiningPhilosophers(config: SimulationConfig = DEFAULT_CONFIG)
     forks,
     logs,
     isRunning,
-    toggleSimulation,
+    setIsRunning,
+    toggleSimulation: () => setIsRunning(!isRunning),
     resetSimulation,
     speed,
-    setSpeed
+    setSpeed,
+    philosopherCount,
+    setPhilosopherCount,
+    activeCode,
+    isStepMode,
+    setIsStepMode,
+    step
   };
 }
