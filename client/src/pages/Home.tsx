@@ -2,6 +2,7 @@ import { useDiningPhilosophers } from "@/lib/simulation-engine";
 import { Table } from "@/components/simulation/Table";
 import { LogViewer } from "@/components/simulation/LogViewer";
 import { ProcessDiagram } from "@/components/simulation/ProcessDiagram";
+import { StatsSummary } from "@/components/simulation/StatsSummary";
 import { CodeViewer } from "@/components/simulation/CodeViewer";
 import { TerminalView } from "@/components/simulation/TerminalView";
 import { Button } from "@/components/ui/button";
@@ -235,6 +236,9 @@ export default function Home() {
             
             <Table philosophers={philosophers} forks={forks} />
           </div>
+
+          {/* State Summary Cards */}
+          <StatsSummary philosophers={philosophers} />
 
           {/* Process Diagram */}
           <ProcessDiagram 
