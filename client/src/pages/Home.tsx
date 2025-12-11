@@ -49,9 +49,16 @@ export default function Home() {
     <div className="min-h-screen bg-background flex flex-col p-4 md:p-8 gap-6 max-w-[1600px] mx-auto">
       {/* Header */}
       <header className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-        <div>
-          <h1 className="font-serif text-3xl md:text-4xl font-bold text-foreground">Dining Philosophers Simulation</h1>
-          <p className="text-muted-foreground mt-1">Concurrency Problem Visualization</p>
+        <div className="flex items-center gap-4">
+          <img 
+            src={authorPhoto} 
+            alt="Mansoor Abdullah Almarzooqi" 
+            className="w-14 h-14 rounded-full object-cover border-2 border-primary shadow-lg"
+          />
+          <div>
+            <h1 className="font-serif text-3xl md:text-4xl font-bold text-foreground">Dining Philosophers Simulation</h1>
+            <p className="text-muted-foreground mt-1">Concurrency Problem Visualization</p>
+          </div>
         </div>
         
         <div className="flex flex-wrap items-center gap-4">
