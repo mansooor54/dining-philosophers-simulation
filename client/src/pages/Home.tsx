@@ -262,19 +262,19 @@ export default function Home() {
              </div>
           </div>
           
-          <Tabs defaultValue="terminal" className="flex-1 flex flex-col">
+          <Tabs defaultValue="terminal" className="flex flex-col h-[400px]">
             <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="terminal">Terminal</TabsTrigger>
               <TabsTrigger value="logs">UI Log</TabsTrigger>
               <TabsTrigger value="code">Code</TabsTrigger>
             </TabsList>
-            <TabsContent value="terminal" className="flex-1 h-0 min-h-[300px]">
+            <TabsContent value="terminal" className="flex-1 h-0">
               <TerminalView logs={terminalLogs} />
             </TabsContent>
-            <TabsContent value="logs" className="flex-1 h-0 min-h-[300px]">
+            <TabsContent value="logs" className="flex-1 h-0">
               <LogViewer logs={logs} />
             </TabsContent>
-            <TabsContent value="code" className="flex-1 h-0 min-h-[300px]">
+            <TabsContent value="code" className="flex-1 h-0">
               <CodeViewer activeKey={isStepMode ? activeCode : null} />
             </TabsContent>
           </Tabs>

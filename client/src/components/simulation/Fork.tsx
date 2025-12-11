@@ -18,7 +18,7 @@ export function ForkIcon({ fork, position, ownerPosition, rotation }: ForkProps)
 
   return (
     <motion.div
-      className={`absolute ${isOwned ? 'z-20' : 'z-0'}`} 
+      className={`absolute ${isOwned ? 'z-50' : 'z-10'}`} 
       initial={false}
       animate={{
         left: finalX,
@@ -31,7 +31,7 @@ export function ForkIcon({ fork, position, ownerPosition, rotation }: ForkProps)
         transform: "translate(-50%, -50%)",
       }}
     >
-      <div className={`p-2 rounded-full transition-colors duration-300 ${isOwned ? 'bg-state-eating/20 text-state-eating' : 'bg-secondary text-muted-foreground'}`}>
+      <div className={`p-2 rounded-full transition-colors duration-300 ${isOwned ? 'bg-state-eating/20 text-state-eating shadow-lg ring-2 ring-state-eating' : 'bg-secondary text-muted-foreground'}`}>
         <UtensilsCrossed className="w-6 h-6" />
       </div>
       <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground font-mono">

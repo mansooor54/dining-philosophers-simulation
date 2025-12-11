@@ -26,7 +26,7 @@ export function LogViewer({ logs }: LogViewerProps) {
           {logs.map((log) => (
             <div key={log.id} className="flex gap-3 text-sm animate-in slide-in-from-left-2 duration-300">
               <div className="font-mono text-xs text-muted-foreground min-w-[60px] pt-1">
-                {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 1 })}
+                {Math.floor(log.timestamp)}ms
               </div>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
@@ -38,7 +38,7 @@ export function LogViewer({ logs }: LogViewerProps) {
                   )}>
                     {log.action}
                   </span>
-                  <span className="font-bold text-xs">Philosopher {log.philosopherId}</span>
+                  <span className="font-bold text-xs">Philosopher {log.philosopherId + 1}</span>
                 </div>
                 <div className="text-muted-foreground text-xs pl-0.5">
                   {log.details}

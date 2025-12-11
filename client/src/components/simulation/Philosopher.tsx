@@ -29,7 +29,7 @@ export function PhilosopherAvatar({ philosopher, position }: PhilosopherProps) {
 
   return (
     <motion.div
-      className="absolute flex flex-col items-center justify-center gap-2"
+      className="absolute flex flex-col items-center justify-center gap-2 z-20"
       style={{
         left: position.x,
         top: position.y,
@@ -42,7 +42,7 @@ export function PhilosopherAvatar({ philosopher, position }: PhilosopherProps) {
       <div className="relative">
         <div
           className={cn(
-            "w-24 h-24 rounded-full border-4 bg-white overflow-hidden transition-all duration-500 z-10 relative",
+            "w-24 h-24 rounded-full border-4 bg-white overflow-hidden transition-all duration-500 relative",
             stateColors[state] || stateColors.thinking
           )}
         >
@@ -54,7 +54,7 @@ export function PhilosopherAvatar({ philosopher, position }: PhilosopherProps) {
         </div>
         
         {/* Status Badge */}
-        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 bg-background border border-border px-3 py-1 rounded-full shadow-lg flex items-center gap-2 min-w-[100px] justify-center">
+        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-30 bg-background border border-border px-3 py-1 rounded-full shadow-lg flex items-center gap-2 min-w-[100px] justify-center">
           {stateIcon[state] || stateIcon.thinking}
           <span className="text-xs font-bold uppercase tracking-wider">
             {state}
