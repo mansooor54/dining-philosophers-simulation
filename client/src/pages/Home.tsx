@@ -262,7 +262,7 @@ export default function Home() {
              </div>
           </div>
           
-          <Tabs defaultValue="terminal" className="flex flex-col h-[400px]">
+          <Tabs defaultValue="terminal" className="flex flex-col h-[500px]">
             <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="terminal">Terminal</TabsTrigger>
               <TabsTrigger value="logs">UI Log</TabsTrigger>
