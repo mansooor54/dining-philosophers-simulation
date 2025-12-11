@@ -22,11 +22,11 @@ export function PhilosopherAvatar({ philosopher, position }: PhilosopherProps) {
   };
 
   const stateIcon: Record<string, ReactNode> = {
-    thinking: <Brain className="w-5 h-5 text-state-thinking" />,
-    hungry: <Clock className="w-5 h-5 text-state-hungry" />,
-    eating: <Utensils className="w-5 h-5 text-state-eating" />,
-    sleeping: <Moon className="w-5 h-5 text-purple-500" />,
-    dead: <Skull className="w-5 h-5 text-destructive" />,
+    thinking: <Brain className="w-3 h-3 text-state-thinking" />,
+    hungry: <Clock className="w-3 h-3 text-state-hungry" />,
+    eating: <Utensils className="w-3 h-3 text-state-eating" />,
+    sleeping: <Moon className="w-3 h-3 text-purple-500" />,
+    dead: <Skull className="w-3 h-3 text-destructive" />,
   };
 
   return (
@@ -44,7 +44,7 @@ export function PhilosopherAvatar({ philosopher, position }: PhilosopherProps) {
       <div className="relative">
         <div
           className={cn(
-            "w-20 h-20 rounded-full border-4 bg-white overflow-hidden transition-all duration-500 relative",
+            "w-10 h-10 rounded-full border-2 bg-white overflow-hidden transition-all duration-500 relative",
             stateColors[state] || stateColors.thinking
           )}
         >
@@ -56,15 +56,15 @@ export function PhilosopherAvatar({ philosopher, position }: PhilosopherProps) {
         </div>
         
         {/* Status Badge */}
-        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-30 bg-background border border-border px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1.5 min-w-[80px] justify-center">
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-30 bg-background border border-border px-1.5 py-0.5 rounded-full shadow-lg flex items-center gap-1 min-w-[60px] justify-center">
           {stateIcon[state] || stateIcon.thinking}
-          <span className="text-[10px] font-bold uppercase tracking-wider">
+          <span className="text-[8px] font-bold uppercase tracking-wider">
             {state}
           </span>
         </div>
       </div>
 
-      <div className="font-serif font-bold text-foreground/80 text-sm mt-1">
+      <div className="font-serif font-bold text-foreground/80 text-xs mt-1">
         P{id + 1}
       </div>
     </motion.div>
