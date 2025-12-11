@@ -44,7 +44,7 @@ export function PhilosopherAvatar({ philosopher, position }: PhilosopherProps) {
       <div className="relative">
         <div
           className={cn(
-            "w-11 h-11 rounded-full border-2 bg-white overflow-hidden transition-all duration-500 relative",
+            "w-12 h-12 rounded-full border-2 bg-white overflow-hidden transition-all duration-500 relative",
             stateColors[state] || stateColors.thinking
           )}
         >
