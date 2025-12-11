@@ -1,118 +1,178 @@
 export const CODE_SNIPPETS = {
   MAIN: {
-    title: "Main Loop",
-    code: `function simulationLoop() {
-  // Check every philosopher
-  for (let p of philosophers) {
-    if (p.state === 'THINKING') {
-      checkThinking(p);
-    } else if (p.state === 'HUNGRY') {
-      tryPickupForks(p);
-    } else if (p.state === 'EATING') {
-      checkEating(p);
-    } else if (p.state === 'SLEEPING') {
-      checkSleeping(p);
+    title: "main.c - Entry Point",
+    code: `int main(int argc, char **argv)
+{
+    t_data  data;
+
+    if (argc < 5 || argc > 6)
+    {
+        printf("Usage: ./philo <number_of_philosophers> ");
+        printf("<time_to_die> <time_to_eat> <time_to_sleep> [must_eat]\\n");
+        return (1);
     }
-  }
-  
-  // Check for starvation
-  checkStarvation();
+    if (check_args(argc, argv) || init_data(&data, argc, argv))
+        return (1);
+    if (data.must_eat_count == 0)
+        return (0);
+    if (init_mutexes(&data) || init_philos(&data))
+        return (cleanup(&data, 1), 1);
+    if (start_simulation(&data))
+        return (cleanup(&data, 2), 1);
+    return (cleanup(&data, 2), 0);
 }`
   },
   THINKING: {
-    title: "Thinking Process",
-    code: `function checkThinking(p) {
-  // Philosopher is contemplating
-  p.thinkingTimeRemaining -= deltaTime;
+    title: "philo_routine.c - Think Routine",
+    code: `void think_routine(t_philo *philo)
+{
+    long long   think_time;
+    long long   time_since_meal;
 
-  if (p.thinkingTimeRemaining <= 0) {
-    // Done thinking, now hungry
-    p.state = 'HUNGRY';
-    log(p.id, "is thinking");
-  }
+    print_status(philo, "is thinking");
+    pthread_mutex_lock(&philo->data->meal_lock);
+    time_since_meal = get_time() - philo->last_meal_time;
+    pthread_mutex_unlock(&philo->data->meal_lock);
+    think_time = (philo->data->time_to_die - time_since_meal
+            - philo->data->time_to_eat) / 2;
+    if (think_time < 0)
+        think_time = 0;
+    if (think_time > 200)
+        think_time = 200;
+    if (think_time > 0)
+        ft_usleep(think_time, philo->data);
 }`
   },
   HUNGRY: {
-    title: "Acquire Resources (Atomic)",
-    code: `function tryPickupForks(p) {
-  const left = getLeftFork(p);
-  const right = getRightFork(p);
-
-  // CRITICAL: Check BOTH forks atomically
-  // This prevents deadlock where everyone 
-  // holds one fork and waits for the other.
-  if (left.owner === null && right.owner === null) {
-    // Acquire both forks
-    left.owner = p.id;
-    right.owner = p.id;
-    
-    log(p.id, "has taken a fork");
-    log(p.id, "has taken a fork");
-    
-    p.state = 'EATING';
-    p.lastMealTime = currentTime;
-    p.eatCount++;
-    
-    log(p.id, "is eating");
-  }
-  // If not both available, keep waiting
+    title: "philo_routine.c - Eat Routine",
+    code: `void eat_routine(t_philo *philo)
+{
+    pthread_mutex_lock(philo->left_fork);
+    print_status(philo, "has taken a fork");
+    if (philo->data->num_philos == 1)
+    {
+        ft_usleep(philo->data->time_to_die, philo->data);
+        pthread_mutex_unlock(philo->left_fork);
+        return ;
+    }
+    pthread_mutex_lock(philo->right_fork);
+    print_status(philo, "has taken a fork");
+    pthread_mutex_lock(&philo->data->meal_lock);
+    philo->last_meal_time = get_time();
+    pthread_mutex_unlock(&philo->data->meal_lock);
+    print_status(philo, "is eating");
+    ft_usleep(philo->data->time_to_eat, philo->data);
+    pthread_mutex_lock(&philo->data->meal_lock);
+    philo->eat_count++;
+    pthread_mutex_unlock(&philo->data->meal_lock);
+    pthread_mutex_unlock(philo->right_fork);
+    pthread_mutex_unlock(philo->left_fork);
 }`
   },
   EATING: {
-    title: "Eating Process",
-    code: `function checkEating(p) {
-  // Philosopher is eating with both forks
-  p.eatingTimeRemaining -= deltaTime;
+    title: "philo_routine.c - Main Loop",
+    code: `void *philo_routine(void *arg)
+{
+    t_philo *philo;
 
-  if (p.eatingTimeRemaining <= 0) {
-    // Finished eating, release forks
-    const left = getLeftFork(p);
-    const right = getRightFork(p);
-    
-    left.owner = null;
-    right.owner = null;
-    
-    // Go to sleep after eating
-    p.state = 'SLEEPING';
-    p.sleepTimeRemaining = config.timeToSleep;
-    
-    log(p.id, "is sleeping");
-  }
+    philo = (t_philo *)arg;
+    wait_for_start(philo->data);
+    if (philo->id % 2 == 0)
+        ft_usleep(1, philo->data);
+    while (!is_dead(philo->data))
+    {
+        eat_routine(philo);
+        if (philo->data->num_philos == 1)
+            break ;
+        if (is_dead(philo->data))
+            break ;
+        print_status(philo, "is sleeping");
+        ft_usleep(philo->data->time_to_sleep, philo->data);
+        if (is_dead(philo->data))
+            break ;
+        think_routine(philo);
+    }
+    return (NULL);
 }`
   },
   SLEEPING: {
-    title: "Sleeping Process",
-    code: `function checkSleeping(p) {
-  // Philosopher is resting after meal
-  p.sleepTimeRemaining -= deltaTime;
+    title: "init.c - Assign Forks",
+    code: `static void assign_forks(t_philo *philo, t_data *data, int i)
+{
+    if (i % 2 == 0)
+    {
+        philo->left_fork = &data->forks[i];
+        philo->right_fork = &data->forks[(i + 1) % data->num_philos];
+    }
+    else
+    {
+        philo->left_fork = &data->forks[(i + 1) % data->num_philos];
+        philo->right_fork = &data->forks[i];
+    }
+}
 
-  if (p.sleepTimeRemaining <= 0) {
-    // Done sleeping, start thinking
-    p.state = 'THINKING';
-    p.thinkingTimeRemaining = config.timeToThink;
-    
-    log(p.id, "is thinking");
-  }
+int init_philos(t_data *data)
+{
+    int i;
+
+    data->philos = malloc(sizeof(t_philo) * data->num_philos);
+    if (!data->philos)
+        return (1);
+    i = 0;
+    while (i < data->num_philos)
+    {
+        data->philos[i].id = i + 1;
+        data->philos[i].eat_count = 0;
+        data->philos[i].last_meal_time = 0;
+        data->philos[i].data = data;
+        assign_forks(&data->philos[i], data, i);
+        i++;
+    }
+    return (0);
 }`
   },
   DEATH: {
-    title: "Starvation Check",
-    code: `function checkStarvation() {
-  for (let p of philosophers) {
-    if (p.state === 'EATING') continue;
-    
-    const timeSinceMeal = currentTime - p.lastMealTime;
-    
-    if (timeSinceMeal > config.timeToDie) {
-      // Philosopher has starved!
-      p.state = 'DEAD';
-      log(p.id, "died");
-      
-      // End simulation
-      stopSimulation();
-      return;
+    title: "monitor.c - Death Check",
+    code: `static int check_philo_death(t_data *data)
+{
+    int         i;
+    long long   time;
+
+    i = 0;
+    while (i < data->num_philos)
+    {
+        pthread_mutex_lock(&data->meal_lock);
+        time = get_time() - data->philos[i].last_meal_time;
+        if (time > data->time_to_die)
+        {
+            pthread_mutex_unlock(&data->meal_lock);
+            set_dead(data);
+            pthread_mutex_lock(&data->write_lock);
+            printf("%lld %d died\\n", 
+                get_time() - data->start_time,
+                data->philos[i].id);
+            pthread_mutex_unlock(&data->write_lock);
+            return (1);
+        }
+        pthread_mutex_unlock(&data->meal_lock);
+        i++;
     }
-  }
+    return (0);
+}
+
+void *monitor_routine(void *arg)
+{
+    t_data  *data;
+
+    data = (t_data *)arg;
+    wait_for_start(data);
+    while (!is_dead(data))
+    {
+        if (check_philo_death(data) || check_all_ate(data))
+            break ;
+        usleep(500);
+    }
+    return (NULL);
 }`
   }
 };
